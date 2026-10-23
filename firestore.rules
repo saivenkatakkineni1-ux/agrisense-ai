@@ -1,0 +1,138 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && request.auth.token.email == 'saivenkatakkineni00@gmail.com';
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() <= 128
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.email is string && data.email.size() <= 120
+        && data.role in ['FARMER', 'BUYER_FPO', 'GOVT_OFFICER', 'SYSTEM_ADMIN']
+        && data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    match /users/{userId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && incoming().uid == request.auth.uid;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isBootstrappedAdmin()) && isValidUser(incoming());
+      allow delete: if isBootstrappedAdmin();
+    }
+
+    function isValidFarm(data) {
+      return data.farmerId is string && data.farmerId.size() <= 128
+        && data.farmName is string && data.farmName.size() <= 120
+        && data.state is string && data.state.size() <= 100
+        && data.district is string && data.district.size() <= 100
+        && data.village is string && data.village.size() <= 100
+        && data.pincode is string && data.pincode.size() <= 10
+        && data.latitude is number && data.longitude is number
+        && data.totalAreaAcres is number
+        && data.verificationStatus in ['PENDING', 'VERIFIED', 'REJECTED']
+        && data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    match /farms/{farmId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(farmId) && isValidFarm(incoming()) && incoming().farmerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(farmId) && isValidFarm(incoming()) && (existing().farmerId == request.auth.uid || isBootstrappedAdmin());
+      allow delete: if isSignedIn() && isValidId(farmId) && (existing().farmerId == request.auth.uid || isBootstrappedAdmin());
+    }
+
+    function isValidCropRecord(data) {
+      return data.farmerId is string && data.farmerId.size() <= 128
+        && data.farmId is string && data.farmId.size() <= 128
+        && data.cropName is string && data.cropName.size() <= 80
+        && data.season in ['Kharif', 'Rabi', 'Zaid']
+        && data.sowingDate is string && data.sowingDate.size() <= 30
+        && data.areaSownAcres is number
+        && data.status in ['SOWN', 'VEGETATIVE', 'FLOWERING', 'MATURING', 'HARVESTED']
+        && data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    match /crop_records/{recordId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(recordId) && isValidCropRecord(incoming()) && incoming().farmerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(recordId) && isValidCropRecord(incoming()) && (existing().farmerId == request.auth.uid || isBootstrappedAdmin());
+      allow delete: if isSignedIn() && isValidId(recordId) && (existing().farmerId == request.auth.uid || isBootstrappedAdmin());
+    }
+
+    function isValidMarketListing(data) {
+      return data.farmerId is string && data.farmerId.size() <= 128
+        && data.farmerName is string && data.farmerName.size() <= 120
+        && data.farmId is string && data.farmId.size() <= 128
+        && data.cropName is string && data.cropName.size() <= 80
+        && data.quantityKg is number && data.quantityKg > 0
+        && data.expectedPricePerKg is number && data.expectedPricePerKg > 0
+        && data.state is string && data.state.size() <= 100
+        && data.district is string && data.district.size() <= 100
+        && data.village is string && data.village.size() <= 100
+        && data.status in ['AVAILABLE', 'COMMITTED', 'FULFILLED', 'WITHDRAWN']
+        && data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    match /market_listings/{listingId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(listingId) && isValidMarketListing(incoming()) && incoming().farmerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(listingId) && isValidMarketListing(incoming()) && (existing().farmerId == request.auth.uid || isBootstrappedAdmin());
+      allow delete: if isSignedIn() && isValidId(listingId) && (existing().farmerId == request.auth.uid || isBootstrappedAdmin());
+    }
+
+    function isValidBuyerEnquiry(data) {
+      return data.listingId is string && data.listingId.size() <= 128
+        && data.farmerId is string && data.farmerId.size() <= 128
+        && data.buyerId is string && data.buyerId.size() <= 128
+        && data.buyerName is string && data.buyerName.size() <= 120
+        && data.offeredPricePerKg is number && data.offeredPricePerKg > 0
+        && data.quantityRequiredKg is number && data.quantityRequiredKg > 0
+        && data.status in ['PENDING', 'ACCEPTED', 'DECLINED']
+        && data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    match /buyer_enquiries/{enquiryId} {
+      allow get, list: if isSignedIn() && (resource.data.buyerId == request.auth.uid || resource.data.farmerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isSignedIn() && isValidId(enquiryId) && isValidBuyerEnquiry(incoming()) && incoming().buyerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(enquiryId) && isValidBuyerEnquiry(incoming()) && (existing().buyerId == request.auth.uid || existing().farmerId == request.auth.uid || isBootstrappedAdmin());
+      allow delete: if isSignedIn() && isValidId(enquiryId) && (existing().buyerId == request.auth.uid || isBootstrappedAdmin());
+    }
+
+    function isValidAuditLog(data) {
+      return data.actorId is string && data.actorId.size() <= 128
+        && data.actorEmail is string && data.actorEmail.size() <= 120
+        && data.actorRole is string && data.actorRole.size() <= 50
+        && data.action is string && data.action.size() <= 100
+        && data.entityType is string && data.entityType.size() <= 50
+        && data.entityId is string && data.entityId.size() <= 128
+        && data.timestamp is string && data.timestamp.size() <= 50;
+    }
+
+    match /audit_logs/{logId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(logId) && isValidAuditLog(incoming()) && incoming().actorId == request.auth.uid;
+      allow update, delete: if false; // Immutable audit trail
+    }
+  }
+}

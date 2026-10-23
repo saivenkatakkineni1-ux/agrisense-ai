@@ -1,0 +1,7 @@
+{
+  "name": "AgriSense AI",
+  "description": "Government-grade agricultural intelligence and market platform with verifiable data provenance, zero synthetic records, and strict data traceability.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

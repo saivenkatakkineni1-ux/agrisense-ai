@@ -1,0 +1,148 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role-based access control for AgriSense AI platform",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["FARMER", "BUYER_FPO", "GOVT_OFFICER", "SYSTEM_ADMIN"] },
+        "state": { "type": "string", "maxLength": 100 },
+        "district": { "type": "string", "maxLength": 100 },
+        "village": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "isVerified": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "displayName", "email", "role", "createdAt"]
+    },
+    "Farm": {
+      "title": "Farm",
+      "description": "Verified agricultural land parcel registered with official administrative location",
+      "type": "object",
+      "properties": {
+        "farmerId": { "type": "string", "maxLength": 128 },
+        "farmName": { "type": "string", "maxLength": 120 },
+        "state": { "type": "string", "maxLength": 100 },
+        "district": { "type": "string", "maxLength": 100 },
+        "subDistrict": { "type": "string", "maxLength": 100 },
+        "village": { "type": "string", "maxLength": 100 },
+        "pincode": { "type": "string", "maxLength": 10 },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "boundaryGeoJson": { "type": "string", "maxLength": 10000 },
+        "totalAreaAcres": { "type": "number" },
+        "soilType": { "type": "string", "maxLength": 50 },
+        "verificationStatus": { "type": "string", "enum": ["PENDING", "VERIFIED", "REJECTED"] },
+        "verifiedByOfficerId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["farmerId", "farmName", "state", "district", "village", "pincode", "latitude", "longitude", "totalAreaAcres", "verificationStatus", "createdAt"]
+    },
+    "CropRecord": {
+      "title": "CropRecord",
+      "description": "Active or historical crop cultivation cycle linked to a verified farm",
+      "type": "object",
+      "properties": {
+        "farmerId": { "type": "string", "maxLength": 128 },
+        "farmId": { "type": "string", "maxLength": 128 },
+        "cropName": { "type": "string", "maxLength": 80 },
+        "variety": { "type": "string", "maxLength": 80 },
+        "season": { "type": "string", "enum": ["Kharif", "Rabi", "Zaid"] },
+        "sowingDate": { "type": "string", "maxLength": 30 },
+        "expectedHarvestDate": { "type": "string", "maxLength": 30 },
+        "areaSownAcres": { "type": "number" },
+        "status": { "type": "string", "enum": ["SOWN", "VEGETATIVE", "FLOWERING", "MATURING", "HARVESTED"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["farmerId", "farmId", "cropName", "season", "sowingDate", "areaSownAcres", "status", "createdAt"]
+    },
+    "MarketListing": {
+      "title": "MarketListing",
+      "description": "Legitimate farmer produce listing with traceable farm origin and zero synthetic entries",
+      "type": "object",
+      "properties": {
+        "farmerId": { "type": "string", "maxLength": 128 },
+        "farmerName": { "type": "string", "maxLength": 120 },
+        "farmId": { "type": "string", "maxLength": 128 },
+        "cropName": { "type": "string", "maxLength": 80 },
+        "variety": { "type": "string", "maxLength": 80 },
+        "quantityKg": { "type": "number" },
+        "expectedPricePerKg": { "type": "number" },
+        "state": { "type": "string", "maxLength": 100 },
+        "district": { "type": "string", "maxLength": 100 },
+        "village": { "type": "string", "maxLength": 100 },
+        "harvestDate": { "type": "string", "maxLength": 30 },
+        "status": { "type": "string", "enum": ["AVAILABLE", "COMMITTED", "FULFILLED", "WITHDRAWN"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["farmerId", "farmerName", "farmId", "cropName", "quantityKg", "expectedPricePerKg", "state", "district", "village", "status", "createdAt"]
+    },
+    "BuyerEnquiry": {
+      "title": "BuyerEnquiry",
+      "description": "Authenticated buyer trade enquiry directed to an active produce listing",
+      "type": "object",
+      "properties": {
+        "listingId": { "type": "string", "maxLength": 128 },
+        "farmerId": { "type": "string", "maxLength": 128 },
+        "buyerId": { "type": "string", "maxLength": 128 },
+        "buyerName": { "type": "string", "maxLength": 120 },
+        "buyerOrganization": { "type": "string", "maxLength": 150 },
+        "offeredPricePerKg": { "type": "number" },
+        "quantityRequiredKg": { "type": "number" },
+        "message": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["PENDING", "ACCEPTED", "DECLINED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["listingId", "farmerId", "buyerId", "buyerName", "offeredPricePerKg", "quantityRequiredKg", "status", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Government-grade audit trail record for data modifications and verification actions",
+      "type": "object",
+      "properties": {
+        "actorId": { "type": "string", "maxLength": 128 },
+        "actorEmail": { "type": "string", "maxLength": 120 },
+        "actorRole": { "type": "string", "maxLength": 50 },
+        "action": { "type": "string", "maxLength": 100 },
+        "entityType": { "type": "string", "maxLength": 50 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "metadata": { "type": "string", "maxLength": 2000 },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["actorId", "actorEmail", "actorRole", "action", "entityType", "entityId", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User account profiles partitioned by UID"
+    },
+    "/farms/{farmId}": {
+      "schema": "Farm",
+      "description": "Verified agricultural land records"
+    },
+    "/crop_records/{recordId}": {
+      "schema": "CropRecord",
+      "description": "Crop cultivation cycles"
+    },
+    "/market_listings/{listingId}": {
+      "schema": "MarketListing",
+      "description": "Legitimate farmer produce offerings"
+    },
+    "/buyer_enquiries/{enquiryId}": {
+      "schema": "BuyerEnquiry",
+      "description": "Direct buyer procurement enquiries"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "System-wide immutable audit trail"
+    }
+  }
+}
